@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BrainBolt — 500 Levels</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f4f6fb;--card:#fff;--text:#171b2d;--muted:#70778a;--primary:#635bff;--secondary:#8b5cf6;--success:#16a34a;--danger:#ef4444;--gold:#f59e0b;--border:#e5e7eb}
+body.dark{--bg:#0d111b;--card:#181d29;--text:#f7f8ff;--muted:#a7aec0;--border:#303746}
+body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:.25s}
+button{font:inherit;cursor:pointer;border:0}.app{width:min(950px,100%);margin:auto;padding-bottom:90px}
+header{padding:22px 18px;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:28px;font-weight:900}.logo span{color:var(--primary)}
+.header-right{display:flex;gap:8px}.pill{background:var(--card);border:1px solid var(--border);border-radius:30px;padding:8px 12px;font-size:14px}
+.screen{display:none;padding:18px}.screen.active{display:block}
+.hero{background:linear-gradient(135deg,#635bff,#8b5cf6);color:white;border-radius:28px;padding:32px;margin-bottom:18px;box-shadow:0 18px 45px rgba(99,91,255,.25)}
+.hero h1{font-size:38px;margin-bottom:8px}.hero p{opacity:.9;margin-bottom:22px}
+.btn{padding:13px 18px;border-radius:14px;font-weight:800}.primary{background:var(--primary);color:white}.white{background:white;color:#5149d8}
+.card{background:var(--card);border:1px solid var(--border);border-radius:21px;padding:20px;margin-bottom:15px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.section-title{margin:24px 0 13px}
+.category{min-height:125px}.category button{width:100%;background:none;color:var(--text);text-align:left}
+.icon{font-size:30px;margin-bottom:10px}.muted{color:var(--muted);font-size:14px}
+.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:18px}
+.level{aspect-ratio:1;border-radius:14px;background:var(--card);border:1px solid var(--border);color:var(--text);font-weight:800;position:relative;transition:.2s}
+.level:hover{transform:translateY(-3px)}.level.locked{opacity:.35;cursor:not-allowed}.level.current{border:2px solid var(--primary);box-shadow:0 0 0 3px rgba(99,91,255,.12)}
+.level.completed{background:rgba(22,163,74,.12);border-color:var(--success)}.stars{display:block;color:var(--gold);font-size:11px;margin-top:2px}
+.progress{height:9px;background:var(--border);border-radius:20px;overflow:hidden;margin:12px 0 20px}.progress div{height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--secondary));transition:.3s}
+.puzzle-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.puzzle-card{background:var(--card);border:1px solid var(--border);border-radius:25px;padding:26px}
+.question{font-size:22px;line-height:1.5;font-weight:800;margin:20px 0}.answers{display:grid;gap:11px}
+.answer{padding:15px;border-radius:14px;background:var(--bg);color:var(--text);border:2px solid var(--border);text-align:left;transition:.2s}
+.answer:hover{border-color:var(--primary)}.answer.selected{border-color:var(--primary);background:rgba(99,91,255,.1)}
+.actions{display:flex;gap:10px;margin-top:18px}.actions button{flex:1}.hint{border:1px solid var(--primary);background:transparent;color:var(--primary)}
+.feedback{padding:14px;border-radius:14px;margin-top:15px;display:none}.feedback.show{display:block}
+.correct{background:rgba(22,163,74,.12);color:var(--success)}.wrong{background:rgba(239,68,68,.12);color:var(--danger)}
+.result{text-align:center;padding:35px 20px}.result-icon{font-size:65px}.final-score{font-size:52px;font-weight:900;color:var(--primary);margin:15px}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.stat{text-align:center}.stat-number{font-size:31px;font-weight:900;color:var(--primary)}
+.nav{position:fixed;bottom:0;left:0;right:0;max-width:950px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-top:1px solid var(--border);padding:9px;z-index:20}
+.nav button{background:none;color:var(--muted);padding:8px}.nav button.active{color:var(--primary);font-weight:800}
+@media(max-width:600px){.hero h1{font-size:29px}.level-grid{grid-template-columns:repeat(5,1fr)}.level{font-size:12px}.question{font-size:19px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+<div class="logo">⚡ Brain<span>Bolt</span></div>
+<div class="header-right"><div class="pill">🔥 <span id="streak">0</span></div><div class="pill">⭐ <span id="score">0</span></div></div>
+</header>
+
+<section id="home" class="screen active">
+<div class="hero"><h1>Think Fast. Think Smart.</h1><p>500 levels of logic, mathematics, patterns and brain challenges.</p><button class="btn white" onclick="continueGame()">▶ Continue</button></div>
+<div class="card"><h2>⚡ Your Progress</h2><p class="muted">Level <strong id="homeLevel">1</strong> of 500</p><div class="progress"><div id="homeProgress"></div></div><p class="muted"><span id="completedCount">0</span>/500 levels completed</p></div>
+<h2 class="section-title">Quick Play</h2>
+<div class="grid">
+<div class="card category"><button onclick="startRandomLevel()"><div class="icon">🎲</div><h3>Random Level</h3><p class="muted">Play any unlocked level</p></button></div>
+<div class="card category"><button onclick="startChallenge()"><div class="icon">⏱️</div><h3>Challenge</h3><p class="muted">Beat the clock</p></button></div>
+</div>
+</section>
+
+<section id="levels" class="screen">
+<h1>🧠 Level Map</h1><p class="muted">Complete a level to unlock the next one.</p>
+<div class="card"><strong>Progress</strong><div class="progress"><div id="levelProgress"></div></div><span id="levelProgressText">0 / 500</span></div>
+<div id="levelGrid" class="level-grid"></div>
+</section>
+
+<section id="puzzle" class="screen">
+<div class="puzzle-top"><strong id="levelTitle">Level 1</strong><span>⏱️ <span id="timer">60</span>s</span></div>
+<div class="progress"><div id="puzzleProgress"></div></div>
+<div class="puzzle-card">
+<div class="muted" id="difficulty">EASY</div><div class="question" id="question">Loading...</div>
+<div id="answers" class="answers"></div>
+<div class="actions"><button class="btn hint" onclick="useHint()">💡 Hint</button><button class="btn primary" onclick="submitAnswer()">Submit</button></div>
+<div id="hintFeedback" class="feedback"></div><div id="feedback" class="feedback"></div>
+</div>
+</section>
+
+<section id="result" class="screen">
+<div class="card result"><div id="resultIcon" class="result-icon">🎉</div><h1 id="resultTitle">Level Complete!</h1><div class="final-score" id="finalScore">0</div><p id="resultText" class="muted"></p><br>
+<button class="btn primary" onclick="nextLevel()">Next Level →</button><br><br><button class="btn primary" onclick="showScreen('levels')">Level Map</button></div>
+</section>
+
+<section id="stats" class="screen">
+<h1>📊 Statistics</h1><br><div class="stat-grid">
+<div class="card stat"><div class="stat-number" id="statCompleted">0</div><p class="muted">Levels Completed</p></div>
+<div class="card stat"><div class="stat-number" id="statAccuracy">0%</div><p class="muted">Accuracy</p></div>
+<div class="card stat"><div class="stat-number" id="statBest">0</div><p class="muted">Best Score</p></div>
+<div class="card stat"><div class="stat-number" id="statLongest">0</div><p class="muted">Longest Streak</p></div>
+<div class="card stat"><div class="stat-number" id="statTime">0s</div><p class="muted">Average Time</p></div>
+<div class="card stat"><div class="stat-number">500</div><p class="muted">Total Levels</p></div>
+</div>
+</section>
+
+<section id="settings" class="screen">
+<h1>⚙️ Settings</h1><br><div class="card">
+<button class="btn primary" style="width:100%;margin-bottom:12px" onclick="toggleDark()">🌙 Toggle Dark Mode</button>
+<button class="btn primary" style="width:100%;background:#ef4444" onclick="resetGame()">Reset All Progress</button>
+</div>
+</section>
+</div>
+
+<nav class="nav">
+<button class="active" onclick="showScreen('home',this)">🏠<br>Home</button>
+<button onclick="showScreen('levels',this)">🧠<br>Levels</button>
+<button onclick="showScreen('stats',this)">📊<br>Stats</button>
+<button onclick="showScreen('settings',this)">⚙️<br>Settings</button>
+</nav>
+
+<script>
+const TOTAL_LEVELS=500;
+let data=JSON.parse(localStorage.getItem("brainbolt500"))||{
+unlocked:1,completed:{},totalScore:0,bestScore:0,attempts:0,correct:0,totalTime:0,streak:0,longestStreak:0
+};
+let game={level:1,puzzle:null,selected:null,hints:3,time:60,timer:null,startTime:0,challenge:false};
+
+function save(){localStorage.setItem("brainbolt500",JSON.stringify(data));updateUI()}
+function showScreen(id,btn){
+document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+if(btn)btn.classList.add("active");updateUI()
+}
+function random(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
+function getDifficulty(l){return l<=50?"EASY":l<=150?"MEDIUM":l<=300?"HARD":l<=425?"EXPERT":"MASTER"}
+function getBaseScore(l){return l<=50?100:l<=150?200:l<=300?300:l<=425?400:500}
+function getTime(l){return l<=50?70:l<=150?60:l<=300?50:l<=425?45:40}
+
+function mathPuzzle(level){
+let max=level<100?12:level<250?25:level<400?50:100,a=random(2,max),b=random(2,max),type=level%3,answer;
+if(type===0){answer=a+b;return{category:"MATHEMATICS",question:`Calculate:<br><br><strong>${a} + ${b} = ?</strong>`,answer,choices:shuffle([answer,answer+random(1,8),answer-random(1,6),answer+random(10,15)]),explanation:`${a} + ${b} = ${answer}.`}}
+if(type===1){answer=a*b;return{category:"MATHEMATICS",question:`Calculate:<br><br><strong>${a} × ${b} = ?</strong>`,answer,choices:shuffle([answer,answer+random(2,10),answer-random(2,10),answer+random(12,20)]),explanation:`${a} × ${b} = ${answer}.`}}
+answer=a*a;return{category:"MATHEMATICS",question:`What is the square of ${a}?`,answer,choices:shuffle([answer,answer+random(1,10),answer-random(1,10),answer+random(12,20)]),explanation:`${a}² = ${answer}.`}
+}
+function patternPuzzle(level){
+let start=random(2,20),difference=level<100?random(1,5):level<300?random(2,10):random(3,20),count=level<100?4:level<300?5:6,sequence=[];
+for(let i=0;i<count;i++)sequence.push(start+i*difference);
+let answer=start+count*difference;
+return{category:"PATTERN",question:`Find the next number:<br><br><strong>${sequence.join(" → ")} → ?</strong>`,answer,choices:shuffle([answer,answer+difference,answer-difference,answer+difference*2]),explanation:`Each number increases by ${difference}.`}
+}
+function logicPuzzle(){
+const names=shuffle(["Alex","Ben","Chris","Daniel"]),first=names[0],second=names[1],third=names[2];
+return{category:"LOGIC",question:`${first} finished before ${second}.<br>${second} finished before ${third}.<br><br>Who finished first?`,answer:first,choices:shuffle([first,second,third,names[3]]),explanation:`${first} is before ${second}, and ${second} is before ${third}. Therefore ${first} is first.`}
+}
+function attentionPuzzle(){
+let number=random(100,999),different=number;while(different===number)different=random(100,999);
+return{category:"ATTENTION",question:`Which number appears only once?<br><br><strong>${number} &nbsp;&nbsp; ${number} &nbsp;&nbsp; ${different} &nbsp;&nbsp; ${number}</strong>`,answer:String(different),choices:shuffle([String(number),String(different),"All","None"]),explanation:`${different} appears once, while ${number} appears three times.`}
+}
+function generatePuzzle(level){
+let type;
+if(level<=50)type=["math","pattern","logic"][level%3];
+else if(level<=150)type=["math","pattern","logic","attention"][level%4];
+else if(level<=300)type=["pattern","logic","math","attention"][level%4];
+else type=["logic","pattern","attention","math"][level%4];
+return type==="math"?mathPuzzle(level):type==="pattern"?patternPuzzle(level):type==="logic"?logicPuzzle(level):attentionPuzzle(level)
+}
+
+function renderLevels(){
+const grid=document.getElementById("levelGrid");grid.innerHTML="";
+for(let i=1;i<=TOTAL_LEVELS;i++){
+const b=document.createElement("button");b.className="level";
+if(i>data.unlocked)b.classList.add("locked");if(i===data.unlocked)b.classList.add("current");if(data.completed[i])b.classList.add("completed");
+let stars=data.completed[i]?.stars||0;
+b.innerHTML=i>data.unlocked?`🔒<br>${i}`:`${i}<span class="stars">${"★".repeat(stars)}${"☆".repeat(3-stars)}</span>`;
+b.onclick=()=>{if(i>data.unlocked){alert(`Complete Level ${data.unlocked} first!`);return}startLevel(i)};
+grid.appendChild(b)
+}
+}
+
+function startLevel(level){
+game.level=level;game.challenge=false;game.puzzle=generatePuzzle(level);game.selected=null;game.hints=3;game.time=getTime(level);game.startTime=Date.now();showScreen("puzzle");loadPuzzle()
+}
+function continueGame(){startLevel(data.unlocked)}
+function startRandomLevel(){startLevel(random(1,data.unlocked))}
+function startChallenge(){
+game.level=random(1,data.unlocked);game.challenge=true;game.puzzle=generatePuzzle(game.level);game.selected=null;game.hints=2;game.time=25;game.startTime=Date.now();showScreen("puzzle");loadPuzzle()
+}
+function loadPuzzle(){
+clearInterval(game.timer);const p=game.puzzle;
+document.getElementById("levelTitle").textContent=`Level ${game.level}`;
+document.getElementById("difficulty").textContent=game.challenge?"⚡ CHALLENGE MODE":getDifficulty(game.level);
+document.getElementById("question").innerHTML=p.question;
+document.getElementById("answers").innerHTML="";
+document.getElementById("puzzleProgress").style.width=`${game.level/TOTAL_LEVELS*100}%`;
+document.getElementById("feedback").className="feedback";document.getElementById("hintFeedback").className="feedback";
+shuffle(p.choices).forEach(choice=>{
+const b=document.createElement("button");b.className="answer";b.textContent=choice;
+b.onclick=()=>{document.querySelectorAll(".answer").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");game.selected=choice};
+document.getElementById("answers").appendChild(b)
+});
+updateTimer();game.timer=setInterval(()=>{game.time--;updateTimer();if(game.time<=0){clearInterval(game.timer);finishPuzzle(false,true)}},1000)
+}
+function updateTimer(){document.getElementById("timer").textContent=game.time}
+function useHint(){
+if(game.hints<=0){showHint("No hints left.");return}game.hints--;
+const p=game.puzzle;
+let text=p.category==="MATHEMATICS"?"💡 Look carefully at the operation being used.":p.category==="PATTERN"?"💡 Check the difference between consecutive numbers.":p.category==="LOGIC"?"💡 Follow the order described by every clue.":"💡 Look carefully at the numbers. One is different.";
+showHint(text)
+}
+function showHint(text){const e=document.getElementById("hintFeedback");e.textContent=text;e.className="feedback show wrong"}
+function submitAnswer(){
+if(game.selected===null){showFeedback("Choose an answer first.",false);return}
+finishPuzzle(String(game.selected)===String(game.puzzle.answer),false)
+}
+function finishPuzzle(correct,timedOut){
+clearInterval(game.timer);const elapsed=Math.max(1,Math.round((Date.now()-game.startTime)/1000));
+data.attempts++;data.totalTime+=elapsed;let points=0;
+if(correct){
+let base=getBaseScore(game.level),speed=Math.max(0,game.time*2),hintPenalty=(3-game.hints)*30;
+points=Math.max(25,base+speed-hintPenalty);data.correct++;data.totalScore+=points;if(points>data.bestScore)data.bestScore=points;
+showFeedback(`✅ Correct! +${points} points<br><br>${game.puzzle.explanation}`,true)
+}else showFeedback(`❌ ${timedOut?"Time's up!":"Not quite."}<br><br>Correct answer: <strong>${game.puzzle.answer}</strong><br><br>${game.puzzle.explanation}`,false);
+setTimeout(()=>showResult(correct,points,elapsed),1100)
+}
+function showFeedback(text,correct){const e=document.getElementById("feedback");e.innerHTML=text;e.className=`feedback show ${correct?"correct":"wrong"}`}
+function showResult(correct,points,time){
+const level=game.level;
+if(correct){
+let stars=time<=10?3:time<=25?2:1,old=data.completed[level];
+if(!old||stars>old.stars)data.completed[level]={stars,score:points,time};
+if(level===data.unlocked&&data.unlocked<TOTAL_LEVELS)data.unlocked++;
+data.streak++;if(data.streak>data.longestStreak)data.longestStreak=data.streak;
+document.getElementById("resultIcon").textContent=stars===3?"🏆":stars===2?"🌟":"🎉";
+document.getElementById("resultTitle").textContent=`Level ${level} Complete!`;
+document.getElementById("resultText").innerHTML=`${"★".repeat(stars)}${"☆".repeat(3-stars)}<br><br>Time: ${time}s`
+}else{
+data.streak=0;document.getElementById("resultIcon").textContent="🧠";document.getElementById("resultTitle").textContent=`Level ${level}`;document.getElementById("resultText").textContent="Keep trying! You can solve it."
+}
+document.getElementById("finalScore").textContent=points;save();showScreen("result")
+}
+function nextLevel(){if(game.level<TOTAL_LEVELS)startLevel(Math.min(game.level+1,data.unlocked));else{alert("🏆 Congratulations! You completed all 500 levels!");showScreen("levels")}}
+function updateUI(){
+document.getElementById("streak").textContent=data.streak;document.getElementById("score").textContent=data.totalScore;document.getElementById("homeLevel").textContent=data.unlocked;
+const completed=Object.keys(data.completed).length;document.getElementById("completedCount").textContent=completed;
+document.getElementById("homeProgress").style.width=`${completed/TOTAL_LEVELS*100}%`;document.getElementById("levelProgress").style.width=`${completed/TOTAL_LEVELS*100}%`;document.getElementById("levelProgressText").textContent=`${completed} / ${TOTAL_LEVELS}`;
+document.getElementById("statCompleted").textContent=completed;document.getElementById("statAccuracy").textContent=data.attempts?Math.round(data.correct/data.attempts*100)+"%":"0%";document.getElementById("statBest").textContent=data.bestScore;document.getElementById("statLongest").textContent=data.longestStreak;document.getElementById("statTime").textContent=data.attempts?Math.round(data.totalTime/data.attempts)+"s":"0s";renderLevels()
+}
+function toggleDark(){document.body.classList.toggle("dark");localStorage.setItem("brainboltDark",document.body.classList.contains("dark"))}
+function resetGame(){
+if(!confirm("Are you sure you want to reset all 500-level progress?"))return;
+data={unlocked:1,completed:{},totalScore:0,bestScore:0,attempts:0,correct:0,totalTime:0,streak:0,longestStreak:0};save();alert("All progress has been reset.")
+}
+if(localStorage.getItem("brainboltDark")==="true")document.body.classList.add("dark");
+updateUI();
+</script>
+</body>
+</html>
